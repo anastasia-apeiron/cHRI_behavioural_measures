@@ -1,7 +1,9 @@
 from pathlib import Path
 import pandas as pd
+# import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
 
 #filter through data that is irrelevant (ie. gaze points down, head points down)
 def csv_Filter (file):
@@ -43,9 +45,56 @@ def csv_plot (file):
     plt.imshow(heatmap, extent=extent, origin='lower')
     plt.savefig(csv_plots / file.stem, bbox_inches = 'tight')
 
+def heatmap_overlay(file):
+    
+    #path to the destination
+    csv_plots = Path("../Thesis/csv_plots")
 
-    #TODO: figure out how to save the images into a separate folder under the csv_file names OR have all the datapoints in one image??
+    #data from combined csv file
+    data = pd.read_csv(file)
 
+    #values for mapping 1
+    x1 = data.loc[:, "gaze_0_x"]
+    y1 = data.loc[:, "gaze_0_y"]
+
+    #values for mapping 2
+    x2 = data.loc[:, "gaze_1_x"]
+    y2 = data.loc[:, "gaze_1_y"]
+
+    #values for mapping 3
+    x3 = data.loc[:, "gaze_angle_x"]
+    y3 = data.loc[:, "gaze_angle_y"]
+
+    #plotting the heatmaps
+    heatmap1, xAxis1, yAxis1 = np.histogram2d(x1, y1, bins=1000)
+    extent1 = [xAxis1[2], xAxis1[-2], yAxis1[2], yAxis1[-2]]
+
+    heatmap2, xAxis2, yAxis2 = np.histogram2d(x2, y2, bins=1000)
+    extent2 = [xAxis2[2], xAxis2[-2], yAxis2[2], yAxis2[-2]]
+
+    heatmap3, xAxis3, yAxis3 = np.histogram2d(x3, y3, bins=1000)
+    extent3 = [xAxis3[2], xAxis3[-2], yAxis3[2], yAxis3[-2]]
+
+    plt.clf()
+    plt.imshow(heatmap1, extent=extent1, origin='lower', cmap=cm.Blues, alpha=1.0)
+    plt.imshow(heatmap2, extent=extent2, origin='lower', cmap=cm.Greens, alpha=0.7)
+    plt.imshow(heatmap3, extent=extent3, origin='lower', cmap=cm.Reds, alpha=0.5)
+
+    ax = plt.gca()
+    # ax.set_facecolor('black')
+    ax.set_xlim(xmin=-1, xmax=2)
+    ax.set_ylim(ymin= -1, ymax=2)
+    ax.set_xticks(np.arange(-1, 2, 1))
+    ax.set_xticks(np.arange(-1, 2, 0.1), minor=True)
+    ax.set_yticks(np.arange(-1, 2, 1))
+    ax.set_yticks(np.arange(-1, 2, 0.1), minor=True)
+    ax.grid(which = 'minor', alpha = 0.3)
+    ax.grid(which = 'major', alpha = 0.7)
+
+    plt.show()
+
+    #save mapping
+    plt.savefig(csv_plots / 'overlay_heatmap.png', bbox_inches = 'tight', dpi=300)
 
 
 def main():
@@ -81,52 +130,58 @@ def main():
         filteredFile = csv_Filter(file)
         filteredFile.to_csv(filtered_csv_files / file.name, index=False)
 
-    """
+    
     ### GENERATING HEATMAPS ###
     #path to the csv files
     filtered_csv_files = Path("../Thesis/filtered_csv_files")
-    csv_plots = Path("../Thesis/gaze_0_heatmaps")
-    """
+    csv_plots = Path("../Thesis/csv_plots")
+    
     #sorted array of csv files
-    files = [ file for file in filtered_csv_files.iterdir() ]
+    files = [ file for file in csv_files.iterdir() ]
     files.sort()
     
     #generate a heatmap for each csv file
     for file in files:
         csv_plot(file)
-    
+   
     #combine the csv files into one file to make the aggregated heatmap
     combined_csv = pd.concat([pd.read_csv(f) for f in files])
-    combined_csv.to_csv(filtered_csv_files / 'combined_csv.csv', index=False)
+    combined_csv.to_csv(csv_files / 'combined_unfiltered_csv.csv', index=False)
 
-    """
     #plot gaze_angle_x and gaze_angle_y
-    data = pd.read_csv(filtered_csv_files / 'combined_csv.csv')
+    data = pd.read_csv(csv_files / 'combined_csv.csv')
         
     #extract the x and y values
-    x = data.loc[:, "gaze_0_x"]
-    y = data.loc[:, "gaze_0_y"]
+    x = data.loc[:, "gaze_angle_x"]
+    y = data.loc[:, "gaze_angle_y"]
 
     #make the heatmap
     heatmap, xAxis, yAxis = np.histogram2d(x, y, bins=1000)
     extent = [xAxis[1], xAxis[-1], yAxis[1], yAxis[-1]]
-
     plt.clf()
     plt.imshow(heatmap, extent=extent, origin='lower')
 
     #grid parameters, superimposed on the heatmap
     ax = plt.gca()
-    ax.set_xticks(np.arange(-1, 1, 1))
-    ax.set_xticks(np.arange(-1, 1, 0.1), minor=True)
-    ax.set_yticks(np.arange(-1, 1, 1))
-    ax.set_yticks(np.arange(-1, 1, 0.1), minor=True)
+    ax.set_xlim(xmin=-1, xmax=2)
+    ax.set_ylim(ymin= -1, ymax=2)
+    ax.set_xticks(np.arange(-1, 2, 1))
+    ax.set_xticks(np.arange(-1, 2, 0.1), minor=True)
+    ax.set_yticks(np.arange(-1, 2, 1))
+    ax.set_yticks(np.arange(-1, 2, 0.1), minor=True)
     ax.grid(which = 'minor', alpha = 0.3)
     ax.grid(which = 'major', alpha = 0.7)
-
+    
     #save the resulting heatmap
-    plt.savefig(csv_plots / 'aggregated_plot_gaze_0.png', bbox_inches = 'tight', dpi=300)
+    plt.savefig(csv_plots / 'aggregated_plot_gaze_angle.png', bbox_inches = 'tight', dpi=300)
+    """
+    
+    ### OVERLAYING HEATMAPS ###
+    filtered_csv_files = Path("../Thesis/filtered_csv_files")
+    
+    combined = filtered_csv_files / 'combined_csv.csv'
 
-
+    heatmap_overlay(combined)
 
 
     
