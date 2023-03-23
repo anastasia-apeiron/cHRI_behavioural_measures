@@ -1,6 +1,6 @@
 from pathlib import Path
 import pandas as pd
-# import seaborn as sns
+import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
@@ -24,7 +24,7 @@ def csv_Filter (file):
 
 def csv_plot (file):
     #get the path for where the plots are going to chill in
-    csv_plots = Path("~/Thesis/gaze_0_heatmaps")
+    csv_plots = Path("../cHRI_behavioural_measures/csv_plots")
     
     #read the file into a dataframe
     data = pd.read_csv(file)
@@ -101,11 +101,11 @@ def main():
     """
     ### EXTRACTING RELATED COLUMNS ###
     #paths to the processed videos and the csv files with the constraints
-    processed = Path("../Processed")
-    csv_Files = Path("../Thesis/csvfiles")
+    processed = Path("../beak0555/Processed")
+    csv_Files = Path("../cHRI_behavioural_measures/csvfiles")
 
     #sorted array of each file with a csv ending in the processed directory
-    files = [ file for file in processed.iterdir() if file.suffix == ".csv" ]
+    files = [ file for file in csv_Files.iterdir() if file.suffix == ".csv" ]
     files.sort()
 
     #iterate through each file in the files array and extract the columns with the constraints into separate csv files
@@ -115,11 +115,11 @@ def main():
         #attempt to store the columns for each file in a separate csv in another directory
         constraints.to_csv(csv_Files / file.name, index=False)
     
-
+    
     ### EXTRACTING SUCCESSFUL FRAMES ###
     #paths to the constrained files and to the destination directory
-    csvFiles = Path("../Thesis/csvfiles")
-    filtered_csv_files = Path("../Thesis/filtered_csv_files")
+    csvFiles = Path("../cHRI_behavioural_measures/csvfiles")
+    filtered_csv_files = Path("../cHRI_behavioural_measures/filtered_csv_files")
 
     #sorted array of constrained files
     files = [ file for file in csvFiles.iterdir() ]
@@ -129,31 +129,31 @@ def main():
     for file in files:
         filteredFile = csv_Filter(file)
         filteredFile.to_csv(filtered_csv_files / file.name, index=False)
-
+    
     
     ### GENERATING HEATMAPS ###
     #path to the csv files
-    filtered_csv_files = Path("../Thesis/filtered_csv_files")
-    csv_plots = Path("../Thesis/csv_plots")
+    filtered_csv_files = Path("../cHRI_behavioural_measures/filtered_csv_files")
+    csv_plots = Path("../cHRI_behavioural_measures/csv_plots")
     
     #sorted array of csv files
-    files = [ file for file in csv_files.iterdir() ]
+    files = [ file for file in filtered_csv_files.iterdir() ]
     files.sort()
-    
+   
     #generate a heatmap for each csv file
     for file in files:
         csv_plot(file)
-   
+
     #combine the csv files into one file to make the aggregated heatmap
     combined_csv = pd.concat([pd.read_csv(f) for f in files])
-    combined_csv.to_csv(csv_files / 'combined_unfiltered_csv.csv', index=False)
-
+    combined_csv.to_csv(filtered_csv_files / 'combined_csv.csv', index=False)
+    
     #plot gaze_angle_x and gaze_angle_y
-    data = pd.read_csv(csv_files / 'combined_csv.csv')
+    data = pd.read_csv(filtered_csv_files / 'combined_csv.csv')
         
     #extract the x and y values
-    x = data.loc[:, "gaze_angle_x"]
-    y = data.loc[:, "gaze_angle_y"]
+    x = data.loc[:, "gaze_1_x"]
+    y = data.loc[:, "gaze_1_y"]
 
     #make the heatmap
     heatmap, xAxis, yAxis = np.histogram2d(x, y, bins=1000)
@@ -173,9 +173,9 @@ def main():
     ax.grid(which = 'major', alpha = 0.7)
     
     #save the resulting heatmap
-    plt.savefig(csv_plots / 'aggregated_plot_gaze_angle.png', bbox_inches = 'tight', dpi=300)
+    plt.savefig(csv_plots / 'aggregated_plot_gaze_1.png', bbox_inches = 'tight', dpi=300)
+
     """
-    
     ### OVERLAYING HEATMAPS ###
     filtered_csv_files = Path("../cHRI_behavioural_measures/filtered_csv_files")
     
