@@ -24,7 +24,7 @@ def csv_Filter (file):
 
 def csv_plot (file):
     #get the path for where the plots are going to chill in
-    csv_plots = Path("../Thesis/gaze_0_heatmaps")
+    csv_plots = Path("~/Thesis/gaze_0_heatmaps")
     
     #read the file into a dataframe
     data = pd.read_csv(file)
@@ -48,7 +48,7 @@ def csv_plot (file):
 def heatmap_overlay(file):
     
     #path to the destination
-    csv_plots = Path("../Thesis/csv_plots")
+    csv_plots = Path("../cHRI_behavioural_measures/csv_plots")
 
     #data from combined csv file
     data = pd.read_csv(file)
@@ -177,7 +177,7 @@ def main():
     """
     
     ### OVERLAYING HEATMAPS ###
-    filtered_csv_files = Path("../Thesis/filtered_csv_files")
+    filtered_csv_files = Path("../cHRI_behavioural_measures/filtered_csv_files")
     
     combined = filtered_csv_files / 'combined_csv.csv'
 
