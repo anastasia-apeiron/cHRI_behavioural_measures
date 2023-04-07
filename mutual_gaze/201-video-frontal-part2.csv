@@ -1,1 +1,2 @@
 frame,timestamp,confidence,success,gaze_0_x,gaze_0_y,gaze_0_z,gaze_1_x,gaze_1_y,gaze_1_z,gaze_angle_x,gaze_angle_y,pose_Rx,pose_Ry,pose_Rz
+1488,49.567,0.88,1,0.354256,0.603418,-0.714416,0.046522,0.441284,-0.896161,0.244,0.575,0.396,-0.328,0.191
