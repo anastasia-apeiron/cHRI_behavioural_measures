@@ -105,7 +105,7 @@ def filter_mutual_gaze (file):
 
     #iterate through each row and collect the frames that satisfy the constraints
     for row in data.itertuples():
-        if (((0.1 < row[11] < 0.7) and (0.6 < row[12] < 1.1)) or (((0.1 < row[5] < 0.7) or (0.1 < row[8] < 0.7)) and ((0.6 < row[6] < 1.1) or (0.6 < row[9] < 1.1)))):
+        if (0.1 < row[11] < 0.7 and 0.6 < row[12] < 1.1):
             frames.append(row[0])
 
 
