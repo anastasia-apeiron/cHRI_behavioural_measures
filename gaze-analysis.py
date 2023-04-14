@@ -13,9 +13,9 @@ def csv_Filter (file):
     #read the file
     data = pd.read_csv(file)
 
-    #iterate through each row and collect the frames that satisfy the filters
+    #iterate through each row and collect the frames that are successful
     for row in data.itertuples():
-        if ((row[4] == 1) or ((row[6] > 0) and (row[9] > 0)) or (row[12] > 0)):
+        if (row[4] == 1):
             frames.append(row[0])
 
     #collect the frames that satisfy the filter and return a dataframe with only those frames
@@ -23,23 +23,19 @@ def csv_Filter (file):
     return filtered
 
 def csv_plot (file):
-    #get the path for where the plots are going to chill in
+    #get the path for where the plots are going to be in
     csv_plots = Path("../cHRI_behavioural_measures/csv_plots")
     
     #read the file into a dataframe
     data = pd.read_csv(file)
 
     #read x and y coordinates for gaze angles
-    #x = data.loc[:, "gaze_angle_x"]
-    #y = data.loc[:, "gaze_angle_y"]
-
-    #read x and y coordinated for gaze_0_x and gaze_0_y
-    x = data.loc[:, "gaze_0_x"]
-    y = data.loc[:, "gaze_0_y"]
+    x = data.loc[:, "gaze_angle_x"]
+    y = data.loc[:, "gaze_angle_y"]
 
     #generate heatmap
-    heatmap, xAxis, yAxis = np.histogram2d(x, y, bins=100)
-    extent = [xAxis[2], xAxis[-2], yAxis[2], yAxis[-2]]
+    heatmap, xAxis, yAxis = np.histogram2d(x, y, bins=1000)
+    extent = [xAxis[1], xAxis[-1], yAxis[1], yAxis[-1]]
 
     plt.clf()
     plt.imshow(heatmap, extent=extent, origin='lower')
@@ -81,7 +77,6 @@ def heatmap_overlay(file):
     plt.imshow(heatmap3, extent=extent3, origin='lower', cmap=cm.Reds, alpha=0.5)
 
     ax = plt.gca()
-    # ax.set_facecolor('black')
     ax.set_xlim(xmin=-1, xmax=2)
     ax.set_ylim(ymin= -1, ymax=2)
     ax.set_xticks(np.arange(-1, 2, 1))
@@ -90,11 +85,10 @@ def heatmap_overlay(file):
     ax.set_yticks(np.arange(-1, 2, 0.1), minor=True)
     ax.grid(which = 'minor', alpha = 0.3)
     ax.grid(which = 'major', alpha = 0.7)
-
     plt.show()
 
     #save mapping
-    plt.savefig(csv_plots / 'overlay_heatmap.png', bbox_inches = 'tight', dpi=300)
+    plt.savefig(csv_plots / 'combined_heatmap.png', bbox_inches = 'tight', dpi=300)
 
 def filter_mutual_gaze (file):
     #list of frames that are relevant
@@ -103,9 +97,9 @@ def filter_mutual_gaze (file):
     #read the file
     data = pd.read_csv(file)
 
-    #iterate through each row and collect the frames that satisfy the constraints
+    #iterate through each row and collect the frames where the child is looking up
     for row in data.itertuples():
-        if (((0.1 < row[11] < 0.7) and (0.6 < row[12] < 1.1)) or (((0.1 < row[5] < 0.7) or (0.1 < row[8] < 0.7)) and ((0.6 < row[6] < 1.1) or (0.6 < row[9] < 1.1)))):
+        if ((0.4 < row[12]) or ((0.4 < row[6]) or (0.4 < row[9]))):
             frames.append(row[0])
 
 
@@ -117,61 +111,56 @@ def main():
     """
     ### EXTRACTING RELATED COLUMNS ###
     #paths to the processed videos and the csv files with the constraints
-    processed = Path("../beak0555/Processed")
+    processed = Path("../../Processed")
     csv_Files = Path("../cHRI_behavioural_measures/csvfiles")
-
+    
     #sorted array of each file with a csv ending in the processed directory
-    files = [ file for file in csv_Files.iterdir() if file.suffix == ".csv" ]
+    files = [ file for file in processed.iterdir() if file.suffix == ".csv" ]
     files.sort()
 
     #iterate through each file in the files array and extract the columns with the constraints into separate csv files
-    for file in files:
-        data = pd.read_csv(file)
-        constraints = data.loc[:, ["frame", "timestamp", "confidence", "success", "gaze_0_x", "gaze_0_y", "gaze_0_z", "gaze_1_x", "gaze_1_y", "gaze_1_z", "gaze_angle_x", "gaze_angle_y", "pose_Rx", "pose_Ry", "pose_Rz"]]
-        #attempt to store the columns for each file in a separate csv in another directory
-        constraints.to_csv(csv_Files / file.name, index=False)
+    for file1 in files:
+        data1 = pd.read_csv(file1)
+        constraints = data1.loc[:, ["frame", "timestamp", "confidence", "success", "gaze_0_x", "gaze_0_y", "gaze_0_z", "gaze_1_x", "gaze_1_y", "gaze_1_z", "gaze_angle_x", "gaze_angle_y", "pose_Rx", "pose_Ry", "pose_Rz"]]
+        
+        #store the columns for each file in a separate csv in another directory
+        constraints.to_csv(csv_Files / file1.name, index=False)
     
-
     
     ### EXTRACTING SUCCESSFUL FRAMES ###
-    #paths to the constrained files and to the destination directory
-    csvFiles = Path("../cHRI_behavioural_measures/csvfiles")
+    #path to the destination directory
     filtered_csv_files = Path("../cHRI_behavioural_measures/filtered_csv_files")
+    csv_f = [file for file in csv_Files.iterdir()]
+    csv_f.sort()
 
-    #sorted array of constrained files
-    files = [ file for file in csvFiles.iterdir() ]
-    files.sort()
 
-    #iterate through the constrained csv files, and filter the ones that are successful and looking up into separate csv files
-    for file in files:
-        filteredFile = csv_Filter(file)
-        filteredFile.to_csv(filtered_csv_files / file.name, index=False)
+    #iterate through the constrained csv files, and filter the ones that are successful into separate csv files
+    for file2 in csv_f:
+        filteredFile = csv_Filter(file2)
+        filteredFile.to_csv(filtered_csv_files / file2.name, index=False)
     
 
     
     ### GENERATING HEATMAPS ###
-    #path to the csv files
-    filtered_csv_files = Path("../cHRI_behavioural_measures/filtered_csv_files")
+    #path to the plot destination directory
     csv_plots = Path("../cHRI_behavioural_measures/csv_plots")
-    
-    #sorted array of csv files
-    files = [ file for file in filtered_csv_files.iterdir() ]
-    files.sort()
-   
+    filteredcsv_f = [file for file in filtered_csv_files.iterdir()]
+    filteredcsv_f.sort()
+
     #generate a heatmap for each csv file
-    for file in files:
-        csv_plot(file)
+    for file3 in filteredcsv_f:
+        csv_plot(file3)
 
     #combine the csv files into one file to make the aggregated heatmap
-    combined_csv = pd.concat([pd.read_csv(f) for f in files])
+    combined_csv = pd.concat([pd.read_csv(f) for f in filtered_csv_files])
     combined_csv.to_csv(filtered_csv_files / 'combined_csv.csv', index=False)
     
     #plot gaze_angle_x and gaze_angle_y
-    data = pd.read_csv(filtered_csv_files / 'combined_csv.csv')
+    data2 = pd.read_csv(filtered_csv_files / 'combined_csv.csv')
         
     #extract the x and y values
-    x = data.loc[:, "gaze_1_x"]
-    y = data.loc[:, "gaze_1_y"]
+    x = data2.loc[:, "gaze_angle_x"]
+    y = data2.loc[:, "gaze_angle_y"]
 
     #make the heatmap
     heatmap, xAxis, yAxis = np.histogram2d(x, y, bins=1000)
@@ -181,50 +170,70 @@ def main():
 
     #grid parameters, superimposed on the heatmap
     ax = plt.gca()
-    ax.set_xlim(xmin=-1, xmax=2)
-    ax.set_ylim(ymin= -1, ymax=2)
-    ax.set_xticks(np.arange(-1, 2, 1))
-    ax.set_xticks(np.arange(-1, 2, 0.1), minor=True)
-    ax.set_yticks(np.arange(-1, 2, 1))
-    ax.set_yticks(np.arange(-1, 2, 0.1), minor=True)
+    ax.set_xlim(xmin=-1, xmax=1)
+    ax.set_ylim(ymin= -1, ymax=1)
+    ax.set_xticks(np.arange(-1, 1, 1))
+    ax.set_xticks(np.arange(-1, 1, 0.1), minor=True)
+    ax.set_yticks(np.arange(-1, 1, 1))
+    ax.set_yticks(np.arange(-1, 1, 0.1), minor=True)
     ax.grid(which = 'minor', alpha = 0.3)
     ax.grid(which = 'major', alpha = 0.7)
     
     #save the resulting heatmap
-    plt.savefig(csv_plots / 'aggregated_plot_gaze_1.png', bbox_inches = 'tight', dpi=300)
+    plt.savefig(csv_plots / 'aggregated_plot_gaze_angle.png', bbox_inches = 'tight', dpi=300)
 
 
 
-    ### OVERLAYING HEATMAPS ###
-    #path to filtered csv files
-    filtered_csv_files = Path("../cHRI_behavioural_measures/filtered_csv_files")
-    
+    ### OVERLAYING HEATMAPS ###    
     #path to concatenated csv file
     combined = filtered_csv_files / 'combined_csv.csv'
 
     #plot and overlay the heatmaps for gaze_0/1/angle_x and gaze_0/1/angle_y
     heatmap_overlay(combined)
     
-    """
+
     
     ### EXTRACT FRAMES WITH MUTUAL GAZE ###
     #path to the filtered csv files and list of the files
-    filtered_csv_files = Path("../cHRI_behavioural_measures/filtered_csv_files")
     mutual_gaze = Path("../cHRI_behavioural_measures/mutual_gaze")
-    files = [ file for file in filtered_csv_files.iterdir() ]
-    files.sort()
-    
+
     #put the csv files through the related function and get a csv file with only the frames with mutual gaze
-    for file in files:
-        mutualGaze = filter_mutual_gaze(file)
-        mutualGaze.to_csv(mutual_gaze / file.name, index=False)
+    for file4 in filteredcsv_f:
+        mutualGaze = filter_mutual_gaze(file4)
+        mutualGaze.to_csv(mutual_gaze / file4.name, index=False)
         
         
+    """
 
-    
+    ### ALL TOGETHER ###
 
+    #paths to the directories
+    csv_files = Path("../cHRI_behavioural_measures/csvfiles")
+    filtered_csv_files = Path("../cHRI_behavioural_measures/filtered_csv_files")
+    csv_plots = Path("../cHRI_behavioural_measures/csv_plots")
+    mutual_gaze = Path("../cHRI_behavioural_measures/mutual_gaze")
 
+    #arrays of files
+    csv_f = [file for file in csv_files.iterdir()]
+    filteredcsv_f = [file for file in filtered_csv_files.iterdir()]
 
+    #filter successful frames in the csv files
+    for file_1 in csv_f:
+        filteredFile = csv_Filter(file_1)
+        filteredFile.to_csv(filtered_csv_files / file_1.name, index=False)
+
+    #combine the successful files into one aggregated file
+    combined_csv = pd.concat([pd.read_csv(f) for f in filteredcsv_f])
+    combined_csv.to_csv(filtered_csv_files / 'combined_csv.csv', index=False)
+
+    #plot heatmap based on gaze_(angle/0/1)_x and gaze_(angle/0/1)_y
+    combinedcsv_f = filtered_csv_files / 'combined_csv.csv'
+    heatmap_overlay(combinedcsv_f)
+
+    #extract the frames with mutual gaze
+    for file_2 in filteredcsv_f:
+        mutualGaze = filter_mutual_gaze(file_2)
+        mutualGaze.to_csv(mutual_gaze / file_2.name, index=False)
 
 
 
